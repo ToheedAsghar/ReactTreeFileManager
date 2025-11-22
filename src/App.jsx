@@ -1,28 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import folderData from "./data/folderData";
 import Folder from "./components/Folder";
 import useTraverseTree from "./hooks/use-traverse-tree";
 
 function App() {
-  const [explorerData, setExplorerData] = useState(folderData);
+  const [explorerData, setExplorerData] = useState(() => {
+    try {
+      const stored = localStorage.getItem("explorerData");
+      return stored ? JSON.parse(stored) : folderData;
+    } catch {
+      return folderData;
+    }
+  });
   const { insertNode, deleteNode, updateNode } = useTraverseTree();
-  
-  const handleInsertNode = (folderId, itemName, isFolder) => {
-    setExplorerData((prev) => insertNode(prev, folderId, itemName, isFolder));
-  };
-  const handleDeleteNode = (folderId) => {
-    // Call deleteNode to get the modified tree
-    const finalItem = deleteNode(explorerData, folderId);
-    // Update the explorerData state with the modified tree
-    setExplorerData(finalItem);
-  };
 
-  const handleUpdateFolder = (id, updatedValue, isFolder) => {
-    const finalItem = updateNode(explorerData, id, updatedValue, isFolder);
-    // Update the explorerData state with the modified tree
+  useEffect(() => {
+    try {
+      localStorage.setItem("explorerData", JSON.stringify(explorerData));
+    } catch {
+      // ignore storage errors
+    }
+  }, [explorerData]);
+
+  const handleInsertNode = useCallback((folderId, itemName, isFolder) => {
+    setExplorerData((prev) => insertNode(prev, folderId, itemName, isFolder));
+  }, [insertNode]);
+
+  const handleDeleteNode = useCallback((folderId) => {
+    const finalItem = deleteNode(explorerData, folderId);
     setExplorerData(finalItem);
-  };
+  }, [explorerData, deleteNode]);
+
+  const handleUpdateFolder = useCallback((id, updatedValue, isFolder) => {
+    const finalItem = updateNode(explorerData, id, updatedValue, isFolder);
+    setExplorerData(finalItem);
+  }, [explorerData, updateNode]);
 
   return (
     <div className="App">

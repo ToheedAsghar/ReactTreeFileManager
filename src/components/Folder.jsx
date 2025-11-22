@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import {
   VscChevronRight,
   VscChevronDown,
@@ -131,12 +131,11 @@ const Folder = ({
           )}
           {explorerData.items.map((item, index) => {
             return (
-              <Folder
+              <Folder key={item.id}
                 handleDeleteNode={handleDeleteNode}
                 handleInsertNode={handleInsertNode}
                 handleUpdateFolder={handleUpdateFolder}
                 explorerData={item}
-                key={index}
               />
             );
           })}
@@ -178,4 +177,4 @@ const Folder = ({
   }
 };
 
-export default Folder;
+export default memo(Folder);
