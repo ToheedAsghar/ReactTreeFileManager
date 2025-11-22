@@ -1,21 +1,23 @@
 const useTraverseTree = () => {
   function insertNode(tree, folderId, itemName, isFolder) {
     if (tree.id === folderId && tree.isFolder) {
-      tree.items.unshift({
-        id: new Date().getTime(),
-        name: itemName,
-        isFolder,
-        items: [],
-      });
-      return tree;
+      const newChild = {
+        id: Date.now(),
+        name: itemName, 
+        isFolder, 
+        items: []
+      };
+
+      return {...tree, items: [newChild, ...(tree.items || [] )]};
     }
 
-    tree.items.map((obj) => {
-      let res = insertNode(obj, folderId, itemName, isFolder);
-      if (res) {
-        return res;
-      }
-    });
+    if(!tree.items) return tree;
+
+    return {
+      ...tree,
+      items: tree.items.map((child) =>
+      insertNode(child, folderId, itemName, isFolder)
+    )};
   }
   function deleteNode(tree, folderId) {
     // base case: found the node to be deleted

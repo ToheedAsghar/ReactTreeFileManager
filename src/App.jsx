@@ -7,9 +7,9 @@ import useTraverseTree from "./hooks/use-traverse-tree";
 function App() {
   const [explorerData, setExplorerData] = useState(folderData);
   const { insertNode, deleteNode, updateNode } = useTraverseTree();
+  
   const handleInsertNode = (folderId, itemName, isFolder) => {
-    const finalItem = insertNode(explorerData, folderId, itemName, isFolder);
-    return finalItem;
+    setExplorerData((prev) => insertNode(prev, folderId, itemName, isFolder));
   };
   const handleDeleteNode = (folderId) => {
     // Call deleteNode to get the modified tree
