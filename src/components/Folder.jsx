@@ -1,4 +1,5 @@
-import { useState, memo } from "react";
+import { useState, memo, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   VscChevronRight,
   VscChevronDown,
@@ -9,16 +10,17 @@ import {
   VscEdit,
   VscTrash,
 } from "react-icons/vsc";
+import {
+  insertNode,
+  deleteNode,
+  renameNode,
+  selectNodeById,
+} from "../Repository/Slices/explorerSlice";
 
-const Folder = ({
-  handleInsertNode,
-  handleDeleteNode,
-  handleUpdateFolder,
-  explorerData,
-}) => {
-  const [nodeName, setNodeName] = useState(
-    explorerData?.name ? explorerData.name : ""
-  );
+const Folder = ({ nodeId }) => {
+  const dispatch = useDispatch();
+  const explorerData = useSelector((s) => selectNodeById(s, nodeId));
+  const [nodeName, setNodeName] = useState(explorerData?.name ?? "");
   const [expand, setExpand] = useState(false);
   const [showInput, setShowInput] = useState({
     visible: false,
@@ -29,47 +31,46 @@ const Folder = ({
     isFolder: null,
   });
 
-  const handleNewFolderButton = (e, isFolder) => {
+  if (!explorerData) return null;
+
+  const handleNewFolderButton = useCallback((e, isFolder) => {
     e.stopPropagation();
     setExpand(true);
     setShowInput({
       visible: true,
       isFolder,
     });
-  };
+  }, []);
 
-  const handleUpdateFolderButton = (e, isFolder, nodeValue) => {
+  const handleUpdateFolderButton = useCallback((e, isFolder, nodeValue) => {
     setNodeName(nodeValue);
     e.stopPropagation();
     setUpdateInput({
       visible: true,
       isFolder,
     });
-  };
+  }, []);
 
-  const handleDeleteFolder = (e, isFolder) => {
+  const handleDeleteFolder = useCallback((e) => {
     e.stopPropagation();
-    handleDeleteNode(explorerData.id);
-  };
-  const onAdd = (e) => {
-    if (e.keyCode === 13 && e.target.value) {
-      // Lets add logic for add folder
-      handleInsertNode(explorerData.id, e.target.value, showInput.isFolder);
+    dispatch(deleteNode({ id: explorerData.id }));
+  }, [dispatch, explorerData?.id]);
+  const onAdd = useCallback((e) => {
+    if (e.key === "Enter" && e.target.value.trim()) {
+      dispatch(insertNode(explorerData.id, e.target.value.trim(), !!showInput.isFolder));
       setShowInput({ ...showInput, visible: false });
     }
-  };
-  const onUpdate = (e) => {
-    if (e.keyCode === 13 && e.target.value) {
-      // Lets add logic for update folder
-      handleUpdateFolder(explorerData.id, e.target.value, true);
+  }, [dispatch, explorerData?.id, showInput]);
+  const onUpdate = useCallback((e) => {
+    if (e.key === "Enter" && e.target.value.trim()) {
+      dispatch(renameNode({ id: explorerData.id, name: e.target.value.trim() }));
       setUpdateInput({ ...updateInput, visible: false });
     }
-  };
+  }, [dispatch, explorerData?.id, updateInput]);
   const handleChange = (event) => {
     setNodeName(event.target.value);
   };
   if (explorerData.isFolder) {
-    console.log("nodeName", nodeName);
     return (
       <div>
         <div
@@ -129,14 +130,9 @@ const Folder = ({
               />
             </div>
           )}
-          {explorerData.items.map((item, index) => {
+          {explorerData.childrenIds.map((childId) => {
             return (
-              <Folder key={item.id}
-                handleDeleteNode={handleDeleteNode}
-                handleInsertNode={handleInsertNode}
-                handleUpdateFolder={handleUpdateFolder}
-                explorerData={item}
-              />
+              <Folder key={childId} nodeId={childId} />
             );
           })}
         </div>
